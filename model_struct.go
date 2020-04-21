@@ -8,8 +8,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/jinzhu/inflection"
 )
 
 // DefaultTableNameHandler default table name handler
@@ -43,13 +41,7 @@ func (s *ModelStruct) TableName(db *DB) string {
 		if tabler, ok := reflect.New(s.ModelType).Interface().(tabler); ok {
 			s.defaultTableName = tabler.TableName()
 		} else {
-			tableName := ToTableName(s.ModelType.Name())
-			db.parent.RLock()
-			if db == nil || (db.parent != nil && !db.parent.singularTable) {
-				tableName = inflection.Plural(tableName)
-			}
-			db.parent.RUnlock()
-			s.defaultTableName = tableName
+			s.defaultTableName = ToTableName(s.ModelType.Name())
 		}
 	}
 
