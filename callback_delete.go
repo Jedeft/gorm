@@ -34,16 +34,32 @@ func deleteCallback(scope *Scope) {
 		}
 
 		deletedAtField, hasDeletedAtField := scope.FieldByName("DeletedAt")
+		deletedUserIDField, hasDeletedUserIDField := scope.FieldByName("DeletedUserID")
 
 		if !scope.Search.Unscoped && hasDeletedAtField {
-			scope.Raw(fmt.Sprintf(
-				"UPDATE %v SET %v=%v%v%v",
-				scope.QuotedTableName(),
-				scope.Quote(deletedAtField.DBName),
-				scope.AddToVars(scope.db.nowFunc().Unix()),
-				addExtraSpaceIfExist(scope.CombinedConditionSql()),
-				addExtraSpaceIfExist(extraOption),
-			)).Exec()
+			var rawSQL string
+			if hasDeletedUserIDField {
+				rawSQL = fmt.Sprintf(
+					"UPDATE %v SET %v=%v, %v=%v%v%v",
+					scope.QuotedTableName(),
+					scope.Quote(deletedAtField.DBName),
+					scope.AddToVars(scope.db.nowFunc().Unix()),
+					scope.Quote(deletedUserIDField.DBName),
+					scope.AddToVars(deletedUserIDField.Field.Interface()),
+					addExtraSpaceIfExist(scope.CombinedConditionSql()),
+					addExtraSpaceIfExist(extraOption),
+				)
+			} else {
+				rawSQL = fmt.Sprintf(
+					"UPDATE %v SET %v=%v%v%v",
+					scope.QuotedTableName(),
+					scope.Quote(deletedAtField.DBName),
+					scope.AddToVars(scope.db.nowFunc().Unix()),
+					addExtraSpaceIfExist(scope.CombinedConditionSql()),
+					addExtraSpaceIfExist(extraOption),
+				)
+			}
+			scope.Raw(rawSQL).Exec()
 		} else {
 			scope.Raw(fmt.Sprintf(
 				"DELETE FROM %v%v%v",
